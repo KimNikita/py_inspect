@@ -39,6 +39,11 @@ import warnings
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
 
+# TODO fix when use hooks
+import threading
+import time
+import win32api
+
 
 def main():
     app = QApplication(sys.argv)
@@ -148,13 +153,13 @@ class MyWindow(QWidget):
 
         # Methods
         self.base_methods = {
-            # TODO remove overriden methods
+            # TODO remove overriden methods capture_as_image and draw_outline
             # 'capture_as_image': self.__capture_as_image,
             'children': self.__children,
             'click_input': self.__click_input,
             'close': self.__close,
             'descendants': self.__descendants,
-            # 'draw_outline': self.__draw_outline,
+            'draw_outline': self.__draw_outline,
             'set_focus': self.__set_focus,
             'texts': self.__texts,
             'type_keys': self.__type_keys,
@@ -338,6 +343,8 @@ class MyWindow(QWidget):
         self.action = self.menu_bar.addMenu("Actions")
         self.mouse = QAction('Find by mouse', self)
         self.mouse.setCheckable(True)
+        self.mouse_thread = threading.Thread(target=self.__lookForMouse, args=(), daemon=True)
+        self.mouse_thread.start()
         default = QAction('Default Action', self)
         default.triggered.connect(self.__default)
         self.action.addAction(self.mouse)
@@ -629,6 +636,15 @@ class MyWindow(QWidget):
 
     # Actions
 
+    # TODO use hooks + find in tree + fix draw
+    def __lookForMouse(self):
+        desktop = pywinauto.Desktop(backend='uia')
+        while True:
+            time.sleep(0.1)
+            if self.mouse.isChecked():
+                x, y = win32api.GetCursorPos()
+                desktop.from_point(x, y).draw_outline()
+
     def __default(self):
         # TODO add write method?
         if self.comboBox.currentText() == 'uia':
@@ -695,8 +711,8 @@ class MyWindow(QWidget):
         dlg.exec()
         self.__write_method('descendants()', 'print')
 
-    # def __draw_outline(self):
-    #    self.current_elem_wrapper.draw_outline()
+    def __draw_outline(self):
+       self.current_elem_wrapper.draw_outline()
 
     def __set_focus(self):
         self.__write_method('set_focus()', 'execute')
