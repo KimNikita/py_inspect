@@ -802,7 +802,7 @@ class MyWindow(QWidget):
 
     # TODO use hooks + start when used and kill when not
     def __lookForMouse(self):
-        desktop = pywinauto.Desktop(backend='uia')
+        desktop = pywinauto.Desktop(backend=self.current_backend)
         while True:
             time.sleep(0.5)
             if self.mouse.isChecked():
